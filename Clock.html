@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clock App</title>
+    <!--
+        This HTML document contains a full-featured clock app with a live clock,
+        a stopwatch, and a countdown timer.
+        The styling is self-contained and matches the same minimalist theme
+        as the notepad and calculator apps.
+    -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+
+        /* Global styles for a consistent look and feel */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #e2e8f0; /* Tailwind's gray-200 */
+            color: #2d3748; /* Tailwind's gray-800 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 1rem;
+        }
+
+        /* Main container for the clock app */
+        .clock-app {
+            background-color: #ffffff;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+            max-width: 450px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        /* Tab navigation for switching between modes */
+        .tabs {
+            display: flex;
+            justify-content: space-around;
+            background-color: #edf2f7; /* Tailwind's gray-200 */
+            border-radius: 0.75rem;
+            padding: 0.5rem;
+        }
+
+        /* Styling for each tab button */
+        .tab-btn {
+            background-color: transparent;
+            border: none;
+            color: #4a5568; /* Tailwind's gray-600 */
+            font-size: 1rem;
+            font-weight: 700;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+        }
+
+        .tab-btn:hover {
+            color: #1a202c; /* Tailwind's gray-900 */
+        }
+
+        .tab-btn.active {
+            background-color: #ffffff;
+            color: #2d3748; /* Tailwind's gray-800 */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        /* Main content display area for each function */
+        .content {
+            text-align: center;
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .content.active {
+            display: flex;
+        }
+
+        /* Display for time, stopwatch, and timer */
+        .display {
+            background-color: #f7fafc; /* Tailwind's gray-100 */
+            border-radius: 0.75rem;
+            padding: 2rem 1.5rem;
+            width: 100%;
+            font-size: 3rem;
+            font-weight: 700;
+            color: #1a202c; /* Tailwind's gray-900 */
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        .display small {
+            font-size: 1.5rem;
+            color: #718096; /* Tailwind's gray-500 */
+        }
+
+        /* Button group styling */
+        .btn-group {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            flex-wrap: wrap; /* Added for responsiveness */
+        }
+
+        /* Styling for control buttons */
+        .btn {
+            background-color: #48bb78; /* Tailwind's green-500 */
+            color: #ffffff;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0.75rem 2rem;
+            font-size: 1.25rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+
+        .btn:hover {
+            background-color: #38a169; /* Tailwind's green-600 */
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        .btn.red {
+            background-color: #fc8181; /* Tailwind's red-400 */
+        }
+
+        .btn.red:hover {
+            background-color: #f56565; /* Tailwind's red-500 */
+        }
+        
+        /* Styles for the timer input fields */
+        .timer-input {
+            display: flex;
+            gap: 0.5rem;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .timer-input input {
+            width: 80px;
+            padding: 0.5rem;
+            font-size: 1.5rem;
+            text-align: center;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            background-color: #f7fafc;
+            color: #1a202c;
+        }
+
+        /* --- Slider Styles --- */
+        .time-format-slider {
+            position: relative;
+            background-color: #edf2f7;
+            border-radius: 0.75rem;
+            padding: 0.5rem;
+            display: flex;
+            gap: 0.5rem;
+            cursor: pointer;
+            width: 200px; /* Set a fixed width for the slider container */
+            justify-content: center;
+        }
+
+        .slider-thumb {
+            position: absolute;
+            width: 50%;
+            height: 100%;
+            background-color: #ffffff;
+            border-radius: 0.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.3s ease-in-out;
+            top: 0;
+            left: 0;
+            z-index: 1;
+        }
+        
+        .slider-thumb.right {
+            transform: translateX(100%);
+        }
+
+        .slider-label {
+            width: 50%;
+            text-align: center;
+            padding: 0.75rem 0;
+            font-weight: 700;
+            color: #4a5568;
+            transition: color 0.3s ease-in-out;
+            z-index: 2;
+        }
+
+        .slider-label.active {
+            color: #2d3748;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="clock-app">
+        <!-- Tab navigation -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="clock">Clock</button>
+            <button class="tab-btn" data-tab="stopwatch">Stopwatch</button>
+            <button class="tab-btn" data-tab="timer">Timer</button>
+        </div>
+
+        <!-- Clock section -->
+        <div id="clock" class="content active">
+            <div class="display" id="clock-display">00:00:00</div>
+            <!-- Slider to toggle between 12-hour and 24-hour formats -->
+            <div class="time-format-slider" id="time-format-slider">
+                <div class="slider-thumb"></div>
+                <span class="slider-label active" id="label-12h">12-hour</span>
+                <span class="slider-label" id="label-24h">24-hour</span>
+            </div>
+        </div>
+
+        <!-- Stopwatch section -->
+        <div id="stopwatch" class="content">
+            <div class="display" id="stopwatch-display">00:00:00<small>.00</small></div>
+            <div class="btn-group">
+                <button class="btn" id="stopwatch-start-btn">Start</button>
+                <button class="btn red" id="stopwatch-pause-btn" style="display: none;">Pause</button>
+                <button class="btn red" id="stopwatch-reset-btn">Reset</button>
+            </div>
+        </div>
+
+        <!-- Timer section -->
+        <div id="timer" class="content">
+            <div class="display" id="timer-display">00:00</div>
+            <div class="timer-input">
+                <input type="number" id="minutes-input" placeholder="Min" value="5" min="0">
+                <input type="number" id="seconds-input" placeholder="Sec" value="0" min="0" max="59">
+            </div>
+            <div class="btn-group">
+                <button class="btn" id="timer-start-btn">Start</button>
+                <button class="btn red" id="timer-pause-btn" style="display: none;">Pause</button>
+                <button class="btn red" id="timer-reset-btn">Reset</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- The audio element for the timer's finished sound -->
+    <audio id="timer-audio" src="data:audio/wav;base64,UklGRl9AAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YUBAAAAAAAA="></audio>
+
+    <script>
+        // --- Tab Switching Logic ---
+        const tabs = document.querySelectorAll('.tab-btn');
+        const contents = document.querySelectorAll('.content');
+
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const targetTab = tab.dataset.tab;
+
+                // Remove active class from all tabs and contents
+                tabs.forEach(t => t.classList.remove('active'));
+                contents.forEach(c => c.classList.remove('active'));
+
+                // Add active class to the clicked tab and its content
+                tab.classList.add('active');
+                document.getElementById(targetTab).classList.add('active');
+            });
+        });
+
+        // --- Clock Logic ---
+        const clockDisplay = document.getElementById('clock-display');
+        const timeFormatSlider = document.getElementById('time-format-slider');
+        const sliderThumb = document.querySelector('.slider-thumb');
+        const label12h = document.getElementById('label-12h');
+        const label24h = document.getElementById('label-24h');
+        let is24HourFormat = false; // Changed to false for 12-hour default
+
+        /**
+         * Updates the clock display every second.
+         */
+        function updateClock() {
+            const now = new Date();
+            let hours = now.getHours();
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            let amPm = '';
+
+            if (!is24HourFormat) {
+                amPm = hours >= 12 ? ' PM' : ' AM';
+                hours = hours % 12;
+                hours = hours ? hours : 12; // The hour '0' should be '12'
+            }
+
+            const displayHours = String(hours).padStart(2, '0');
+            clockDisplay.textContent = `${displayHours}:${minutes}:${seconds}${amPm}`;
+        }
+        
+        // Event listener for the time format slider
+        timeFormatSlider.addEventListener('click', () => {
+            is24HourFormat = !is24HourFormat;
+            
+            if (is24HourFormat) {
+                sliderThumb.classList.add('right');
+                label12h.classList.remove('active');
+                label24h.classList.add('active');
+            } else {
+                sliderThumb.classList.remove('right');
+                label24h.classList.remove('active');
+                label12h.classList.add('active');
+            }
+            updateClock(); // Update the display immediately
+        });
+
+        // Update the clock every second
+        setInterval(updateClock, 1000);
+        
+        // Initial setup for the slider and clock
+        if (is24HourFormat) {
+            sliderThumb.classList.add('right');
+            label12h.classList.remove('active');
+            label24h.classList.add('active');
+        } else {
+            sliderThumb.classList.remove('right');
+            label24h.classList.remove('active');
+            label12h.classList.add('active');
+        }
+        updateClock();
+    </script>
+</body>
+</html>
+

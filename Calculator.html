@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple Calculator</title>
+    <!--
+        This HTML document contains a simple calculator app.
+        The styling is self-contained within the <style> tag to ensure
+        it is a single, portable file. The theme matches the notepad app.
+    -->
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+
+        /* Global styles for a consistent look and feel */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #e2e8f0; /* Tailwind's gray-200 */
+            color: #2d3748; /* Tailwind's gray-800 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 1rem; /* Added padding for smaller screens */
+        }
+
+        /* Container for the calculator */
+        .calculator {
+            background-color: #ffffff;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+            max-width: 400px;
+            width: 100%;
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1rem;
+        }
+
+        /* Display area for the calculator result and input */
+        .display {
+            grid-column: 1 / -1;
+            background-color: #f7fafc; /* Tailwind's gray-100 */
+            border-radius: 0.5rem;
+            padding: 1rem;
+            text-align: right;
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #1a202c; /* Tailwind's gray-900 */
+            overflow-x: auto;
+            white-space: nowrap;
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+        }
+
+        /* Styling for the calculator buttons */
+        .btn {
+            background-color: #edf2f7; /* Tailwind's gray-200 */
+            border: none;
+            border-radius: 0.5rem;
+            padding: 1.25rem;
+            font-size: 1.5rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+
+        .btn:hover {
+            background-color: #e2e8f0; /* Tailwind's gray-300 */
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+
+        /* Operator button styling */
+        .btn.operator {
+            background-color: #63b3ed; /* Tailwind's blue-400 */
+            color: #ffffff;
+        }
+
+        .btn.operator:hover {
+            background-color: #4299e1; /* Tailwind's blue-500 */
+        }
+
+        /* Clear and equals button styling */
+        .btn.clear {
+            background-color: #fc8181; /* Tailwind's red-400 */
+            color: #ffffff;
+        }
+        
+        .btn.clear:hover {
+            background-color: #f56565; /* Tailwind's red-500 */
+        }
+
+        .btn.equals {
+            background-color: #48bb78; /* Tailwind's green-500 */
+            color: #ffffff;
+        }
+        
+        .btn.equals:hover {
+            background-color: #38a169; /* Tailwind's green-600 */
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="calculator">
+        <!-- Display for the calculator -->
+        <div class="display" id="display">0</div>
+        
+        <!-- Calculator buttons -->
+        <button class="btn clear" onclick="clearDisplay()">AC</button>
+        <button class="btn operator" onclick="appendToDisplay('/')">/</button>
+        <button class="btn operator" onclick="appendToDisplay('*')">*</button>
+        <button class="btn operator" onclick="appendToDisplay('-')">-</button>
+        
+        <button class="btn" onclick="appendToDisplay('7')">7</button>
+        <button class="btn" onclick="appendToDisplay('8')">8</button>
+        <button class="btn" onclick="appendToDisplay('9')">9</button>
+        <button class="btn operator" onclick="appendToDisplay('+')">+</button>
+        
+        <button class="btn" onclick="appendToDisplay('4')">4</button>
+        <button class="btn" onclick="appendToDisplay('5')">5</button>
+        <button class="btn" onclick="appendToDisplay('6')">6</button>
+        
+        <!-- Corrected button order -->
+        <button class="btn equals" onclick="calculateResult()">=</button>
+        <button class="btn" onclick="appendToDisplay('1')">1</button>
+        <button class="btn" onclick="appendToDisplay('2')">2</button>
+        <button class="btn" onclick="appendToDisplay('3')">3</button>
+        
+        <button class="btn" onclick="appendToDisplay('.')">.</button>
+        <button class="btn" onclick="appendToDisplay('0')">0</button>
+        
+    </div>
+
+    <script>
+        // Get the display element
+        const display = document.getElementById('display');
+        let currentInput = '';
+        let result = 0;
+        let lastOperator = null;
+
+        /**
+         * Appends a value to the current input string.
+         * @param {string} value - The value to append (number, decimal point, or operator).
+         */
+        function appendToDisplay(value) {
+            // Prevent multiple decimal points in a number
+            if (value === '.' && currentInput.includes('.')) {
+                return;
+            }
+            
+            // If the display is '0' and a number is pressed, replace '0'
+            if (display.textContent === '0' && value !== '.') {
+                display.textContent = value;
+            } else {
+                display.textContent += value;
+            }
+        }
+
+        /**
+         * Clears the display and resets all variables.
+         */
+        function clearDisplay() {
+            display.textContent = '0';
+            currentInput = '';
+            result = 0;
+            lastOperator = null;
+        }
+
+        /**
+         * Calculates the result of the expression on the display.
+         */
+        function calculateResult() {
+            try {
+                // Use a secure way to evaluate the expression
+                // Note: eval() is generally not recommended for user input,
+                // but for a simple calculator with limited operators, it's acceptable.
+                const expression = display.textContent;
+                // Replace the division symbol with the JavaScript operator
+                const sanitizedExpression = expression.replace(/x/g, '*').replace(/\u00f7/g, '/');
+                
+                const finalResult = Function(`'use strict'; return (${sanitizedExpression})`)();
+                
+                // Check for NaN, Infinity, etc.
+                if (!Number.isFinite(finalResult)) {
+                    display.textContent = 'Error';
+                } else {
+                    // Fix floating point issues for display purposes
+                    display.textContent = finalResult.toFixed(4).replace(/\.?0+$/, '');
+                }
+            } catch (e) {
+                display.textContent = 'Error';
+            }
+        }
+    </script>
+</body>
+</html>
+
