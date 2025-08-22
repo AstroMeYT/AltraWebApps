@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather App</title>
+    <!--
+        This HTML document contains a simple weather app.
+        It uses the same minimalist design language as the clock and calculator apps.
+        It features an input field to get weather for a city and displays
+        the temperature and conditions. This version uses the wttr.in API.
+    -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+
+        /* Global styles for a consistent look and feel, using Tailwind-like classes */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #e2e8f0; /* gray-200 */
+            color: #2d3748; /* gray-800 */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 1rem;
+        }
+
+        .weather-app {
+            background-color: #ffffff;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+            max-width: 450px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem;
+            text-align: center;
+        }
+        
+        /* Main display area */
+        .weather-display {
+            background-color: #f7fafc; /* gray-100 */
+            border-radius: 0.75rem;
+            padding: 2rem 1.5rem;
+            width: 100%;
+            font-weight: 700;
+            color: #1a202c; /* gray-900 */
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            min-height: 200px; /* Adjusted height for more content */
+        }
+        
+        /* City and temperature text */
+        .city-name {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+        
+        .temperature {
+            font-size: 3.5rem;
+            font-weight: 700;
+            line-height: 1;
+        }
+
+        .feels-like {
+            font-size: 1rem;
+            color: #4a5568; /* gray-600 */
+            margin-top: -0.5rem;
+        }
+        
+        .conditions {
+            font-size: 1.25rem;
+            color: #718096; /* gray-500 */
+            margin-top: 1rem;
+        }
+        
+        .details-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            width: 100%;
+            margin-top: 1.5rem;
+            text-align: left;
+        }
+        
+        .detail-item {
+            background-color: #e2e8f0; /* gray-200 */
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 400;
+        }
+        
+        .detail-label {
+            font-weight: 700;
+            color: #4a5568;
+        }
+
+        /* Search input and button */
+        .search-container {
+            display: flex;
+            gap: 1rem;
+            width: 100%;
+        }
+
+        .search-input {
+            flex-grow: 1;
+            padding: 0.75rem 1rem;
+            font-size: 1rem;
+            border: 1px solid #cbd5e0; /* gray-300 */
+            border-radius: 0.5rem;
+            background-color: #f7fafc;
+            color: #2d3748;
+            transition: box-shadow 0.2s ease-in-out;
+        }
+
+        .search-input:focus {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.5); /* blue-500 with opacity */
+        }
+        
+        .btn {
+            background-color: #48bb78; /* green-500 */
+            color: #ffffff;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0.75rem 2rem;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06);
+        }
+
+        .btn:hover {
+            background-color: #38a169; /* green-600 */
+            transform: translateY(-2px);
+        }
+
+        .btn:active {
+            transform: translateY(0);
+        }
+        
+        .error-message {
+            color: #e53e3e; /* red-600 */
+            font-weight: 700;
+            margin-top: 1rem;
+        }
+
+        .loading-text {
+            color: #4a5568; /* gray-600 */
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="weather-app">
+        <div class="weather-display" id="weather-display">
+            <p class="city-name">Enter a City</p>
+            <p class="temperature">--°F</p>
+            <p class="conditions">Get the local weather.</p>
+        </div>
+        
+        <div class="search-container">
+            <input type="text" id="city-input" class="search-input" placeholder="e.g., London">
+            <button class="btn" id="search-btn">Search</button>
+        </div>
+        
+        <p id="error-message" class="error-message" style="display: none;"></p>
+    </div>
+
+    <script>
+        const cityInput = document.getElementById('city-input');
+        const searchBtn = document.getElementById('search-btn');
+        const weatherDisplay = document.getElementById('weather-display');
+        const errorMessage = document.getElementById('error-message');
+
+        /**
+         * Fetches weather data for a given city using the wttr.in API.
+         * @param {string} city - The city name to fetch weather for.
+         */
+        async function fetchWeatherData(city) {
+            const url = `https://wttr.in/${city}?format=j1`;
+            
+            // Show loading state
+            weatherDisplay.innerHTML = `
+                <p class="loading-text">Loading...</p>
+            `;
+            errorMessage.style.display = 'none';
+
+            try {
+                const response = await fetch(url);
+                
+                if (!response.ok) {
+                    throw new Error('Weather data not found. Please try again.');
+                }
+
+                const data = await response.json();
+                
+                if (!data || !data.current_condition || data.current_condition.length === 0) {
+                     throw new Error('City not found.');
+                }
+                
+                const current = data.current_condition[0];
+                const weather = {
+                    city: data.nearest_area[0].areaName[0].value,
+                    tempF: current.temp_F,
+                    feelsLikeF: current.FeelsLikeF,
+                    conditions: current.weatherDesc[0].value,
+                    humidity: current.humidity,
+                    windspeedMiles: current.windspeedMiles,
+                    precip: current.precipMM,
+                    precipChance: data.weather[0].hourly[0].chanceofrain
+                };
+
+                // Update the display with the new data
+                weatherDisplay.innerHTML = `
+                    <p class="city-name">${weather.city}</p>
+                    <p class="temperature">${weather.tempF}°F</p>
+                    <p class="feels-like">Feels like: ${weather.feelsLikeF}°F</p>
+                    <p class="conditions">${weather.conditions}</p>
+                    <div class="details-grid">
+                        <div class="detail-item">
+                            <span class="detail-label">Humidity:</span> ${weather.humidity}%
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Wind:</span> ${weather.windspeedMiles} mph
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Precipitation:</span> ${weather.precip} mm
+                        </div>
+                        <div class="detail-item">
+                            <span class="detail-label">Chance of Rain:</span> ${weather.precipChance}%
+                        </div>
+                    </div>
+                `;
+
+            } catch (error) {
+                // Handle the error and display it to the user
+                weatherDisplay.innerHTML = `
+                    <p class="city-name">Error</p>
+                    <p class="temperature">--°F</p>
+                    <p class="conditions">City not found.</p>
+                `;
+                errorMessage.style.display = 'block';
+                errorMessage.textContent = error.message;
+                console.error("Error fetching weather:", error);
+            }
+        }
+        
+        // Add event listener for the search button
+        searchBtn.addEventListener('click', () => {
+            const city = cityInput.value.trim();
+            if (city) {
+                fetchWeatherData(city);
+            } else {
+                errorMessage.style.display = 'block';
+                errorMessage.textContent = 'Please enter a city name.';
+            }
+        });
+
+        // Allow pressing Enter in the input field to trigger search
+        cityInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                const city = cityInput.value.trim();
+                if (city) {
+                    fetchWeatherData(city);
+                } else {
+                    errorMessage.style.display = 'block';
+                    errorMessage.textContent = 'Please enter a city name.';
+                }
+            }
+        });
+        
+    </script>
+
+</body>
+</html>
